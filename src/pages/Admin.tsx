@@ -47,6 +47,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   useMovimentacoes,
   useTodaySummary,
+  useTecidosSummary,
   useTecidos,
   useOperadores,
   useMotivos,
@@ -156,6 +157,7 @@ const AdminPage = () => {
 
   const { data: summary, isLoading: loadingSummary } = useTodaySummary();
   const { data: movimentacoes, isLoading: loadingMovimentacoes } = useMovimentacoes(filters);
+  const { data: tecidosSummary, isLoading: loadingTecidosSummary } = useTecidosSummary(filters);
   const { data: tecidos, isLoading: loadingTecidos } = useTecidos();
   const { data: operadores, isLoading: loadingOperadores } = useOperadores();
   const { data: motivos, isLoading: loadingMotivos } = useMotivos();
@@ -246,35 +248,128 @@ const AdminPage = () => {
                 <TabsTrigger value="operadores">Operadores</TabsTrigger>
                 <TabsTrigger value="motivos">Motivos</TabsTrigger>
               </TabsList>
-              <TabsContent value="tecidos" className="mt-4">
-                <ManageListDialog
-                  title="Tecidos"
-                  items={tecidos}
-                  isLoading={loadingTecidos}
-                  onCreate={(nome) => createTecido.mutate(nome)}
-                  onDelete={(id) => deleteTecido.mutate(id)}
-                  isCreating={createTecido.isPending}
-                />
+              <TabsContent value="tecidos" className="mt-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {loadingTecidos
+                        ? 'Carregando...'
+                        : `${tecidos?.length || 0} tecido${(tecidos?.length || 0) !== 1 ? 's' : ''} cadastrado${(tecidos?.length || 0) !== 1 ? 's' : ''}`}
+                    </p>
+                  </div>
+                  <ManageListDialog
+                    title="Tecidos"
+                    items={tecidos}
+                    isLoading={loadingTecidos}
+                    onCreate={(nome) => createTecido.mutate(nome)}
+                    onDelete={(id) => deleteTecido.mutate(id)}
+                    isCreating={createTecido.isPending}
+                  />
+                </div>
+                {loadingTecidos ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-12 w-full" />
+                    ))}
+                  </div>
+                ) : tecidos && tecidos.length > 0 ? (
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {tecidos.map((tecido) => (
+                      <div
+                        key={tecido.id}
+                        className="flex items-center justify-between rounded-lg border p-3 bg-card"
+                      >
+                        <span className="font-medium">{tecido.nome}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8 border rounded-lg">
+                    Nenhum tecido cadastrado. Clique em "Gerenciar" para adicionar.
+                  </p>
+                )}
               </TabsContent>
-              <TabsContent value="operadores" className="mt-4">
-                <ManageListDialog
-                  title="Operadores"
-                  items={operadores}
-                  isLoading={loadingOperadores}
-                  onCreate={(nome) => createOperador.mutate(nome)}
-                  onDelete={(id) => deleteOperador.mutate(id)}
-                  isCreating={createOperador.isPending}
-                />
+              <TabsContent value="operadores" className="mt-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {loadingOperadores
+                        ? 'Carregando...'
+                        : `${operadores?.length || 0} operador${(operadores?.length || 0) !== 1 ? 'es' : ''} cadastrado${(operadores?.length || 0) !== 1 ? 's' : ''}`}
+                    </p>
+                  </div>
+                  <ManageListDialog
+                    title="Operadores"
+                    items={operadores}
+                    isLoading={loadingOperadores}
+                    onCreate={(nome) => createOperador.mutate(nome)}
+                    onDelete={(id) => deleteOperador.mutate(id)}
+                    isCreating={createOperador.isPending}
+                  />
+                </div>
+                {loadingOperadores ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-12 w-full" />
+                    ))}
+                  </div>
+                ) : operadores && operadores.length > 0 ? (
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {operadores.map((operador) => (
+                      <div
+                        key={operador.id}
+                        className="flex items-center justify-between rounded-lg border p-3 bg-card"
+                      >
+                        <span className="font-medium">{operador.nome}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8 border rounded-lg">
+                    Nenhum operador cadastrado. Clique em "Gerenciar" para adicionar.
+                  </p>
+                )}
               </TabsContent>
-              <TabsContent value="motivos" className="mt-4">
-                <ManageListDialog
-                  title="Motivos"
-                  items={motivos}
-                  isLoading={loadingMotivos}
-                  onCreate={(nome) => createMotivo.mutate(nome)}
-                  onDelete={(id) => deleteMotivo.mutate(id)}
-                  isCreating={createMotivo.isPending}
-                />
+              <TabsContent value="motivos" className="mt-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {loadingMotivos
+                        ? 'Carregando...'
+                        : `${motivos?.length || 0} motivo${(motivos?.length || 0) !== 1 ? 's' : ''} cadastrado${(motivos?.length || 0) !== 1 ? 's' : ''}`}
+                    </p>
+                  </div>
+                  <ManageListDialog
+                    title="Motivos"
+                    items={motivos}
+                    isLoading={loadingMotivos}
+                    onCreate={(nome) => createMotivo.mutate(nome)}
+                    onDelete={(id) => deleteMotivo.mutate(id)}
+                    isCreating={createMotivo.isPending}
+                  />
+                </div>
+                {loadingMotivos ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-12 w-full" />
+                    ))}
+                  </div>
+                ) : motivos && motivos.length > 0 ? (
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {motivos.map((motivo) => (
+                      <div
+                        key={motivo.id}
+                        className="flex items-center justify-between rounded-lg border p-3 bg-card"
+                      >
+                        <span className="font-medium">{motivo.nome}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8 border rounded-lg">
+                    Nenhum motivo cadastrado. Clique em "Gerenciar" para adicionar.
+                  </p>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -345,6 +440,63 @@ const AdminPage = () => {
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Tecidos Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Quantidade Total por Tecido
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingTecidosSummary ? (
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 w-full" />
+                ))}
+              </div>
+            ) : tecidosSummary && tecidosSummary.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {tecidosSummary.map((item) => (
+                  <div
+                    key={item.tecido}
+                    className={cn(
+                      'rounded-lg border-2 p-4 transition-colors',
+                      item.quantidade > 0
+                        ? 'border-green-500/50 bg-green-50 dark:bg-green-950/20'
+                        : item.quantidade < 0
+                          ? 'border-red-500/50 bg-red-50 dark:bg-red-950/20'
+                          : 'border-muted bg-muted/50'
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm text-foreground">{item.tecido}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Quantidade total</p>
+                      </div>
+                      <Badge
+                        variant={item.quantidade > 0 ? 'default' : item.quantidade < 0 ? 'destructive' : 'secondary'}
+                        className={cn(
+                          'text-lg font-bold px-3 py-1',
+                          item.quantidade > 0 && 'bg-green-500 hover:bg-green-600',
+                          item.quantidade < 0 && 'bg-red-500 hover:bg-red-600'
+                        )}
+                      >
+                        {item.quantidade > 0 ? '+' : ''}
+                        {item.quantidade}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center py-8 text-muted-foreground border rounded-lg">
+                Nenhum tecido encontrado no histórico.
+              </p>
+            )}
           </CardContent>
         </Card>
 

@@ -28,7 +28,7 @@ export function TecidoCombobox({ tecidos, value, onChange, isLoading }: TecidoCo
   const [open, setOpen] = React.useState(false);
 
   if (isLoading) {
-    return <Skeleton className="h-14 w-full rounded-xl" />;
+    return <Skeleton className="h-14 w-full rounded-2xl" />;
   }
 
   return (
@@ -38,21 +38,28 @@ export function TecidoCombobox({ tecidos, value, onChange, isLoading }: TecidoCo
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label="Selecionar tecido"
           className={cn(
-            'h-14 w-full justify-between rounded-xl border-2 px-4 text-base',
+            'h-14 w-full justify-between rounded-2xl border-2 px-5 text-base font-medium',
+            'transition-all duration-200 active:scale-[0.98]',
+            'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
+            'touch-manipulation',
             !value && 'text-muted-foreground'
           )}
         >
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 shrink-0 opacity-50" />
-            {value || 'Selecione um tecido...'}
+          <div className="flex items-center gap-3">
+            <Search className="h-5 w-5 shrink-0 opacity-60" />
+            <span className="truncate">{value || 'Selecione um tecido...'}</span>
           </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-2 h-5 w-5 shrink-0 opacity-60" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
-          <CommandInput placeholder="Buscar tecido..." className="h-12" />
+          <CommandInput 
+            placeholder="Buscar tecido..." 
+            className="h-14 text-base" 
+          />
           <CommandList>
             <CommandEmpty>Nenhum tecido encontrado.</CommandEmpty>
             <CommandGroup>
@@ -64,11 +71,11 @@ export function TecidoCombobox({ tecidos, value, onChange, isLoading }: TecidoCo
                     onChange(currentValue === value ? '' : currentValue);
                     setOpen(false);
                   }}
-                  className="h-12 text-base"
+                  className="h-14 text-base min-h-[56px] touch-manipulation"
                 >
                   <Check
                     className={cn(
-                      'mr-2 h-4 w-4',
+                      'mr-3 h-5 w-5',
                       value === tecido.nome ? 'opacity-100' : 'opacity-0'
                     )}
                   />

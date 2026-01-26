@@ -18,25 +18,33 @@ interface OperadorSelectProps {
 
 export function OperadorSelect({ operadores, value, onChange, isLoading }: OperadorSelectProps) {
   if (isLoading) {
-    return <Skeleton className="h-14 w-full rounded-xl" />;
+    return <Skeleton className="h-14 w-full rounded-2xl" />;
   }
 
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
+        aria-label="Selecionar operador"
         className={cn(
-          'h-14 w-full rounded-xl border-2 px-4 text-base',
+          'h-14 w-full rounded-2xl border-2 px-5 text-base font-medium',
+          'transition-all duration-200 active:scale-[0.98]',
+          'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
+          'touch-manipulation',
           !value && 'text-muted-foreground'
         )}
       >
-        <div className="flex items-center gap-2">
-          <User className="h-4 w-4 shrink-0 opacity-50" />
+        <div className="flex items-center gap-3">
+          <User className="h-5 w-5 shrink-0 opacity-60" />
           <SelectValue placeholder="Selecione o operador..." />
         </div>
       </SelectTrigger>
       <SelectContent>
         {operadores?.map((op) => (
-          <SelectItem key={op.id} value={op.nome} className="h-12 text-base">
+          <SelectItem 
+            key={op.id} 
+            value={op.nome} 
+            className="h-14 text-base min-h-[56px] touch-manipulation"
+          >
             {op.nome}
           </SelectItem>
         ))}

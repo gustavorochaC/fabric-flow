@@ -5,24 +5,21 @@ import { toast } from 'sonner';
 // Types
 export interface Tecido {
   id: number;
-  created_at: string;
   nome: string;
 }
 
 export interface Operador {
   id: number;
-  created_at: string;
   nome: string;
 }
 
 export interface Motivo {
   id: number;
-  created_at: string;
   nome: string;
 }
 
 export interface Movimentacao {
-  id: number;
+  id: string;
   created_at: string;
   tipo_movimentacao: string;
   tecido: string;
@@ -39,13 +36,18 @@ export interface MovimentacaoInsert {
   operador: string;
 }
 
+export interface TecidoSummary {
+  tecido: string;
+  quantidade: number;
+}
+
 // Fetch lists
 export function useTecidos() {
   return useQuery({
     queryKey: ['tecidos'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('EST_tecidos')
+        .from('est_tecidos')
         .select('*')
         .order('nome');
       if (error) throw error;
@@ -59,7 +61,7 @@ export function useOperadores() {
     queryKey: ['operadores'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('EST_operadores')
+        .from('est_operadores')
         .select('*')
         .order('nome');
       if (error) throw error;
@@ -73,7 +75,7 @@ export function useMotivos() {
     queryKey: ['motivos'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('EST_motivos')
+        .from('est_motivos')
         .select('*')
         .order('nome');
       if (error) throw error;
@@ -88,7 +90,7 @@ export function useMovimentacoes(filters?: { tecido?: string; dateFrom?: string;
     queryKey: ['movimentacoes', filters],
     queryFn: async () => {
       let query = supabase
-        .from('EST_movimentacoes')
+        .from('est_movimentacoes')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -116,7 +118,7 @@ export function useTodaySummary() {
     queryKey: ['summary', today],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('EST_movimentacoes')
+        .from('est_movimentacoes')
         .select('tipo_movimentacao, quantidade')
         .gte('created_at', today + 'T00:00:00')
         .lte('created_at', today + 'T23:59:59');
@@ -138,13 +140,60 @@ export function useTodaySummary() {
   });
 }
 
+export function useTecidosSummary(filters?: { tecido?: string; dateFrom?: string; dateTo?: string }) {
+  return useQuery({
+    queryKey: ['tecidos-summary', filters],
+    queryFn: async () => {
+      let query = supabase
+        .from('est_movimentacoes')
+        .select('tecido, tipo_movimentacao, quantidade');
+
+      if (filters?.tecido) {
+        query = query.eq('tecido', filters.tecido);
+      }
+      if (filters?.dateFrom) {
+        query = query.gte('created_at', filters.dateFrom);
+      }
+      if (filters?.dateTo) {
+        query = query.lte('created_at', filters.dateTo + 'T23:59:59');
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const typedData = data as { tecido: string; tipo_movimentacao: string; quantidade: number }[];
+      
+      // Agrupar por tecido e calcular total (entradas - saídas)
+      const summary = typedData.reduce((acc, mov) => {
+        const tecido = mov.tecido;
+        if (!acc[tecido]) {
+          acc[tecido] = 0;
+        }
+        if (mov.tipo_movimentacao === 'Entrada') {
+          acc[tecido] += mov.quantidade;
+        } else {
+          acc[tecido] -= mov.quantidade;
+        }
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Converter para array e ordenar por quantidade (maior primeiro)
+      const result: TecidoSummary[] = Object.entries(summary)
+        .map(([tecido, quantidade]) => ({ tecido, quantidade }))
+        .sort((a, b) => b.quantidade - a.quantidade);
+
+      return result;
+    },
+  });
+}
+
 export function useCreateMovimentacao() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (movimentacao: MovimentacaoInsert) => {
       const { data, error } = await supabase
-        .from('EST_movimentacoes')
+        .from('est_movimentacoes')
         .insert([movimentacao])
         .select()
         .single();
@@ -171,7 +220,7 @@ export function useCreateTecido() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (nome: string) => {
-      const { error } = await supabase.from('EST_tecidos').insert([{ nome }]);
+      const { error } = await supabase.from('est_tecidos').insert([{ nome }]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -186,7 +235,7 @@ export function useDeleteTecido() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from('EST_tecidos').delete().eq('id', id);
+      const { error } = await supabase.from('est_tecidos').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -201,7 +250,7 @@ export function useCreateOperador() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (nome: string) => {
-      const { error } = await supabase.from('EST_operadores').insert([{ nome }]);
+      const { error } = await supabase.from('est_operadores').insert([{ nome }]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -216,7 +265,7 @@ export function useDeleteOperador() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from('EST_operadores').delete().eq('id', id);
+      const { error } = await supabase.from('est_operadores').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -231,7 +280,7 @@ export function useCreateMotivo() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (nome: string) => {
-      const { error } = await supabase.from('EST_motivos').insert([{ nome }]);
+      const { error } = await supabase.from('est_motivos').insert([{ nome }]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -246,7 +295,7 @@ export function useDeleteMotivo() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from('EST_motivos').delete().eq('id', id);
+      const { error } = await supabase.from('est_motivos').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {

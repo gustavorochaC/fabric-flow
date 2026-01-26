@@ -38,17 +38,20 @@ export function QuantityStepper({
   };
 
   return (
-    <div className="flex items-center justify-center gap-3">
+    <div className="flex items-center justify-center gap-4">
       <Button
         type="button"
         variant="outline"
         size="icon"
         onClick={handleDecrement}
         disabled={value <= min}
+        aria-label="Diminuir quantidade"
         className={cn(
-          'h-14 w-14 rounded-xl border-2 text-2xl font-bold',
-          'transition-all active:scale-95',
-          'disabled:opacity-40'
+          'h-14 w-14 min-h-[56px] min-w-[56px] rounded-2xl border-2',
+          'transition-all duration-200 active:scale-[0.95]',
+          'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
+          'touch-manipulation',
+          'disabled:opacity-50 disabled:cursor-not-allowed'
         )}
       >
         <Minus className="h-6 w-6" />
@@ -60,10 +63,12 @@ export function QuantityStepper({
         pattern="[0-9]*"
         value={value}
         onChange={handleInputChange}
+        aria-label="Quantidade"
         className={cn(
-          'h-16 w-28 text-center text-3xl font-bold',
-          'rounded-xl border-2 bg-card',
-          'focus:border-primary focus:ring-primary'
+          'h-16 w-32 text-center text-3xl font-bold',
+          'rounded-2xl border-2 bg-card',
+          'focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary',
+          'touch-manipulation'
         )}
       />
 
@@ -73,10 +78,13 @@ export function QuantityStepper({
         size="icon"
         onClick={handleIncrement}
         disabled={value >= max}
+        aria-label="Aumentar quantidade"
         className={cn(
-          'h-14 w-14 rounded-xl border-2 text-2xl font-bold',
-          'transition-all active:scale-95',
-          'disabled:opacity-40'
+          'h-14 w-14 min-h-[56px] min-w-[56px] rounded-2xl border-2',
+          'transition-all duration-200 active:scale-[0.95]',
+          'focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
+          'touch-manipulation',
+          'disabled:opacity-50 disabled:cursor-not-allowed'
         )}
       >
         <Plus className="h-6 w-6" />

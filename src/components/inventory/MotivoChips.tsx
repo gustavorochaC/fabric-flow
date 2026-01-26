@@ -28,19 +28,22 @@ export function MotivoChips({ motivos, value, onChange, isLoading }: MotivoChips
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-3">
       {motivos.map((motivo) => (
         <button
           key={motivo.id}
           type="button"
           onClick={() => onChange(motivo.nome)}
+          aria-label={`Selecionar motivo: ${motivo.nome}`}
+          aria-pressed={value === motivo.nome}
           className={cn(
-            'rounded-full px-5 py-3 text-sm font-medium transition-all',
-            'min-h-[48px] border-2',
-            'focus:outline-none focus:ring-2 focus:ring-offset-2',
+            'rounded-full px-6 py-3.5 text-base font-semibold transition-all duration-200',
+            'min-h-[56px] min-w-[56px] border-2',
+            'active:scale-[0.97] touch-manipulation',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
             value === motivo.nome
-              ? 'border-primary bg-primary text-primary-foreground shadow-md'
-              : 'border-border bg-card text-foreground hover:border-primary/50 hover:bg-accent'
+              ? 'border-primary bg-primary text-primary-foreground shadow-lg scale-[1.02]'
+              : 'border-border bg-card text-foreground active:bg-accent'
           )}
         >
           {motivo.nome}
