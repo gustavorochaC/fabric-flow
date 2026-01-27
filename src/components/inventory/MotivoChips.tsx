@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -8,7 +9,7 @@ interface MotivoChipsProps {
   isLoading?: boolean;
 }
 
-export function MotivoChips({ motivos, value, onChange, isLoading }: MotivoChipsProps) {
+export const MotivoChips = React.memo(function MotivoChips({ motivos, value, onChange, isLoading }: MotivoChipsProps) {
   if (isLoading) {
     return (
       <div className="flex flex-wrap gap-2">
@@ -51,4 +52,4 @@ export function MotivoChips({ motivos, value, onChange, isLoading }: MotivoChips
       ))}
     </div>
   );
-}
+});

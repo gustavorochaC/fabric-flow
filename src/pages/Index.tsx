@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Package } from 'lucide-react';
+import { Inventory, CheckCircle } from '@mui/icons-material';
+import { CircularProgress } from '@mui/material';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 import { ActionToggle } from '@/components/inventory/ActionToggle';
 import { TecidoCombobox } from '@/components/inventory/TecidoCombobox';
@@ -16,6 +18,7 @@ import {
   useMotivos,
   useCreateMovimentacao,
 } from '@/hooks/useInventoryData';
+import { validateNonEmptyString, validateQuantity } from '@/lib/sanitize';
 
 type MovementType = 'Entrada' | 'Saída';
 
@@ -26,38 +29,90 @@ const Index = () => {
   const [motivo, setMotivo] = useState('');
   const [operador, setOperador] = useState('');
 
+  const { toast } = useToast();
   const { data: tecidos, isLoading: loadingTecidos } = useTecidos();
   const { data: operadores, isLoading: loadingOperadores } = useOperadores();
   const { data: motivos, isLoading: loadingMotivos } = useMotivos();
   const createMovimentacao = useCreateMovimentacao();
 
-  const isFormValid = tecido && quantidade > 0 && motivo && operador;
+  const isFormValid = useMemo(
+    () => tecido && quantidade > 0 && motivo && operador,
+    [tecido, quantidade, motivo, operador]
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isFormValid) return;
+  const resetForm = useCallback(() => {
+    setTecido('');
+    setQuantidade(1);
+    setMotivo('');
+    setOperador('');
+  }, []);
 
-    createMovimentacao.mutate(
-      {
-        tipo_movimentacao: tipoMovimentacao,
-        tecido,
-        quantidade,
-        motivo,
-        operador,
-      },
-      {
-        onSuccess: () => {
-          // Reset form
-          setTecido('');
-          setQuantidade(1);
-          setMotivo('');
-          setOperador('');
-        },
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!isFormValid) {
+        toast({
+          title: 'Formulário incompleto',
+          description: 'Por favor, preencha todos os campos obrigatórios.',
+          variant: 'destructive',
+        });
+        return;
       }
-    );
-  };
 
-  const borderColor = tipoMovimentacao === 'Entrada' ? 'border-entrada' : 'border-saida';
+      // Sanitizar e validar dados antes de enviar
+      const sanitizedTecido = validateNonEmptyString(tecido, 100);
+      const sanitizedMotivo = validateNonEmptyString(motivo, 100);
+      const sanitizedOperador = validateNonEmptyString(operador, 100);
+      const validatedQuantity = validateQuantity(quantidade);
+
+      if (!sanitizedTecido || !sanitizedMotivo || !sanitizedOperador || !validatedQuantity) {
+        toast({
+          title: 'Dados inválidos',
+          description: 'Por favor, verifique os dados informados.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      createMovimentacao.mutate(
+        {
+          tipo_movimentacao: tipoMovimentacao,
+          tecido: sanitizedTecido,
+          quantidade: validatedQuantity,
+          motivo: sanitizedMotivo,
+          operador: sanitizedOperador,
+        },
+        {
+          onSuccess: () => {
+            resetForm();
+            toast({
+              title: 'Movimentação registrada!',
+              description: `${tipoMovimentacao} de ${quantidade} unidade(s) de ${tecido} registrada com sucesso.`,
+              duration: 4000,
+            });
+          },
+          onError: (error: Error) => {
+            toast({
+              title: 'Erro ao registrar',
+              description: error.message || 'Não foi possível registrar a movimentação. Tente novamente.',
+              variant: 'destructive',
+              duration: 5000,
+            });
+          },
+        }
+      );
+    },
+    [isFormValid, tipoMovimentacao, tecido, quantidade, motivo, operador, createMovimentacao, resetForm, toast]
+  );
+
+  const borderColor = useMemo(
+    () => (tipoMovimentacao === 'Entrada' ? 'border-entrada' : 'border-saida'),
+    [tipoMovimentacao]
+  );
+
+  const handleTipoChange = useCallback((value: MovementType) => {
+    setTipoMovimentacao(value);
+  }, []);
 
   return (
     <div className="min-h-dvh bg-background pb-24 safe-area-inset-bottom">
@@ -65,7 +120,7 @@ const Index = () => {
         {/* Header - Mobile Optimized */}
         <header className="mb-6 flex items-center gap-3">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary shadow-md">
-            <Package className="h-7 w-7 text-primary-foreground" />
+            <Inventory className="h-7 w-7 text-primary-foreground" />
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-bold text-foreground leading-tight">Gestão de Estoque</h1>
@@ -73,17 +128,26 @@ const Index = () => {
           </div>
         </header>
 
-        <form id="movement-form" onSubmit={handleSubmit} className="space-y-5">
+        <form 
+          id="movement-form" 
+          onSubmit={handleSubmit} 
+          className="space-y-5"
+          aria-label="Formulário de registro de movimentação de estoque"
+        >
           {/* Action Toggle - Mobile Optimized */}
-          <ActionToggle value={tipoMovimentacao} onChange={setTipoMovimentacao} />
+          <ActionToggle value={tipoMovimentacao} onChange={handleTipoChange} />
 
           {/* Form Card - Mobile Optimized */}
           <Card className={cn('border-2 transition-all duration-200 shadow-lg', borderColor)}>
             <CardContent className="space-y-5 p-6">
               {/* Tecido */}
-              <div className="space-y-3">
-                <label className="text-base font-semibold text-foreground block">
-                  Tecido
+              <div className="space-y-3" role="group" aria-labelledby="tecido-label">
+                <label 
+                  id="tecido-label"
+                  htmlFor="tecido-combobox"
+                  className="text-base font-semibold text-foreground block"
+                >
+                  Tecido <span className="text-destructive" aria-label="obrigatório">*</span>
                 </label>
                 <TecidoCombobox
                   tecidos={tecidos || []}
@@ -94,17 +158,24 @@ const Index = () => {
               </div>
 
               {/* Quantidade */}
-              <div className="space-y-3">
-                <label className="text-base font-semibold text-foreground block">
-                  Quantidade
+              <div className="space-y-3" role="group" aria-labelledby="quantidade-label">
+                <label 
+                  id="quantidade-label"
+                  htmlFor="quantidade-input"
+                  className="text-base font-semibold text-foreground block"
+                >
+                  Quantidade <span className="text-destructive" aria-label="obrigatório">*</span>
                 </label>
                 <QuantityStepper value={quantidade} onChange={setQuantidade} />
               </div>
 
               {/* Motivo */}
-              <div className="space-y-3">
-                <label className="text-base font-semibold text-foreground block">
-                  Motivo
+              <div className="space-y-3" role="group" aria-labelledby="motivo-label">
+                <label 
+                  id="motivo-label"
+                  className="text-base font-semibold text-foreground block"
+                >
+                  Motivo <span className="text-destructive" aria-label="obrigatório">*</span>
                 </label>
                 <MotivoChips
                   motivos={motivos || []}
@@ -115,9 +186,13 @@ const Index = () => {
               </div>
 
               {/* Operador */}
-              <div className="space-y-3">
-                <label className="text-base font-semibold text-foreground block">
-                  Operador
+              <div className="space-y-3" role="group" aria-labelledby="operador-label">
+                <label 
+                  id="operador-label"
+                  htmlFor="operador-select"
+                  className="text-base font-semibold text-foreground block"
+                >
+                  Operador <span className="text-destructive" aria-label="obrigatório">*</span>
                 </label>
                 <OperadorSelect
                   operadores={operadores || []}
@@ -150,11 +225,14 @@ const Index = () => {
           >
             {createMovimentacao.isPending ? (
               <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Salvando...
+                <CircularProgress size={20} className="mr-2" sx={{ color: 'currentColor' }} aria-hidden="true" />
+                <span>Salvando...</span>
               </>
             ) : (
-              'Confirmar Registro'
+              <>
+                <CheckCircle className="mr-2 h-5 w-5" aria-hidden="true" />
+                <span>Confirmar Registro</span>
+              </>
             )}
           </Button>
         </div>

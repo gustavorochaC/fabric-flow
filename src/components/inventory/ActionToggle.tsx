@@ -1,5 +1,6 @@
+import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { Download, Upload } from '@mui/icons-material';
 
 type MovementType = 'Entrada' | 'Saída';
 
@@ -8,7 +9,7 @@ interface ActionToggleProps {
   onChange: (value: MovementType) => void;
 }
 
-export function ActionToggle({ value, onChange }: ActionToggleProps) {
+export const ActionToggle = React.memo(function ActionToggle({ value, onChange }: ActionToggleProps) {
   return (
     <div className="grid grid-cols-2 gap-4">
       <button
@@ -27,7 +28,7 @@ export function ActionToggle({ value, onChange }: ActionToggleProps) {
         aria-label="Selecionar Entrada"
         aria-pressed={value === 'Entrada'}
       >
-        <ArrowDownToLine className="h-8 w-8" />
+        <Download className="h-8 w-8" />
         <span>Entrada</span>
       </button>
 
@@ -47,9 +48,9 @@ export function ActionToggle({ value, onChange }: ActionToggleProps) {
         aria-label="Selecionar Saída"
         aria-pressed={value === 'Saída'}
       >
-        <ArrowUpFromLine className="h-8 w-8" />
+        <Upload className="h-8 w-8" />
         <span>Saída</span>
       </button>
     </div>
   );
-}
+});

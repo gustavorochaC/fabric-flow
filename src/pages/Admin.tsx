@@ -1,17 +1,17 @@
+
 import { useState } from 'react';
+import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  Calendar,
+  ArrowDownward,
+  ArrowUpward,
+  CalendarToday,
   ChevronLeft,
-  Package,
-  Plus,
-  Settings,
-  Trash2,
-} from 'lucide-react';
+  Inventory as InventoryIcon,
+  FilterList as FilterListIcon
+} from "@mui/icons-material"
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,15 +26,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -42,7 +33,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
+
+import { AdminSidebar } from '@/components/AdminSidebar';
+import { ManageListDialog } from '@/components/inventory/ManageListDialog';
 
 import {
   useMovimentacoes,
@@ -60,100 +58,14 @@ import {
 } from '@/hooks/useInventoryData';
 import { cn } from '@/lib/utils';
 
-function ManageListDialog({
-  title,
-  items,
-  isLoading,
-  onCreate,
-  onDelete,
-  isCreating,
-}: {
-  title: string;
-  items: { id: number; nome: string }[] | undefined;
-  isLoading: boolean;
-  onCreate: (nome: string) => void;
-  onDelete: (id: number) => void;
-  isCreating: boolean;
-}) {
-  const [newItem, setNewItem] = useState('');
-
-  const handleCreate = () => {
-    if (newItem.trim()) {
-      onCreate(newItem.trim());
-      setNewItem('');
-    }
-  };
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Settings className="h-4 w-4" />
-          Gerenciar
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Gerenciar {title}</DialogTitle>
-          <DialogDescription>
-            Adicione ou remova itens da lista de {title.toLowerCase()}.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder={`Novo ${title.toLowerCase()}...`}
-              value={newItem}
-              onChange={(e) => setNewItem(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-            />
-            <Button onClick={handleCreate} disabled={isCreating || !newItem.trim()}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="max-h-60 overflow-y-auto space-y-2">
-            {isLoading ? (
-              <Skeleton className="h-10 w-full" />
-            ) : items?.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhum item cadastrado.
-              </p>
-            ) : (
-              items?.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <span>{item.nome}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onDelete(item.id)}
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogTrigger asChild>
-            <Button variant="secondary">Fechar</Button>
-          </DialogTrigger>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 const AdminPage = () => {
   const [filters, setFilters] = useState<{
     tecido?: string;
     dateFrom?: string;
     dateTo?: string;
   }>({});
+
+  const [manageDialog, setManageDialog] = useState<'tecidos' | 'operadores' | 'motivos' | null>(null);
 
   const { data: summary, isLoading: loadingSummary } = useTodaySummary();
   const { data: movimentacoes, isLoading: loadingMovimentacoes } = useMovimentacoes(filters);
@@ -173,394 +85,305 @@ const AdminPage = () => {
     return format(new Date(dateString), "dd/MM HH:mm", { locale: ptBR });
   };
 
+  // Sidebar colapsada por padrão em telas grandes (lg-xl = 1024px+)
+  const [defaultSidebarOpen, setDefaultSidebarOpen] = useState<boolean | undefined>(undefined);
+
+  React.useEffect(() => {
+    const checkScreenSize = () => {
+      // lg breakpoint = 1024px
+      const isLargeScreen = window.innerWidth >= 1024;
+      // Colapsada por padrão em telas grandes
+      setDefaultSidebarOpen(!isLargeScreen);
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto flex items-center justify-between p-4">
-          <div className="flex items-center gap-4">
+    <SidebarProvider defaultOpen={defaultSidebarOpen ?? false}>
+      <AdminSidebar 
+        onManageTecidos={() => setManageDialog('tecidos')}
+        onManageOperadores={() => setManageDialog('operadores')}
+        onManageMotivos={() => setManageDialog('motivos')}
+      />
+      <SidebarInset>
+        {/* Header */}
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
+          <SidebarTrigger className="-ml-1" />
+          <div className="flex items-center gap-2">
             <Link to="/">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="h-9 w-9">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
             </Link>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                <Package className="h-5 w-5 text-primary-foreground" />
-              </div>
+              <div className="h-6 w-[1px] bg-border mr-2" />
               <div>
-                <h1 className="text-lg font-bold">Painel Administrativo</h1>
-                <p className="text-sm text-muted-foreground">Gestão de Estoque</p>
+                <h1 className="text-lg font-semibold leading-none">Painel Administrativo</h1>
               </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="container mx-auto p-4 space-y-6">
-        {/* Summary Cards */}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <main className="flex-1 space-y-6 p-6">
+          {/* Summary Cards */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total de Entradas (Hoje)
+                </CardTitle>
+                <ArrowDownward className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                {loadingSummary ? (
+                  <Skeleton className="h-8 w-20" />
+                ) : (
+                  <div className="text-2xl font-bold text-green-600">{summary?.entradas || 0}</div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total de Saídas (Hoje)
+                </CardTitle>
+                <ArrowUpward className="h-4 w-4 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                {loadingSummary ? (
+                  <Skeleton className="h-8 w-20" />
+                ) : (
+                  <div className="text-2xl font-bold text-red-600">{summary?.saidas || 0}</div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filters */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Entradas (Hoje)
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <FilterListIcon className="h-4 w-4" />
+                Filtros
               </CardTitle>
-              <ArrowDownToLine className="h-5 w-5 text-entrada" />
             </CardHeader>
             <CardContent>
-              {loadingSummary ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                <p className="text-3xl font-bold text-entrada">{summary?.entradas || 0}</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Saídas (Hoje)
-              </CardTitle>
-              <ArrowUpFromLine className="h-5 w-5 text-saida" />
-            </CardHeader>
-            <CardContent>
-              {loadingSummary ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                <p className="text-3xl font-bold text-saida">{summary?.saidas || 0}</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Configuration Management */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Gerenciar Opções
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="tecidos" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="tecidos">Tecidos</TabsTrigger>
-                <TabsTrigger value="operadores">Operadores</TabsTrigger>
-                <TabsTrigger value="motivos">Motivos</TabsTrigger>
-              </TabsList>
-              <TabsContent value="tecidos" className="mt-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      {loadingTecidos
-                        ? 'Carregando...'
-                        : `${tecidos?.length || 0} tecido${(tecidos?.length || 0) !== 1 ? 's' : ''} cadastrado${(tecidos?.length || 0) !== 1 ? 's' : ''}`}
-                    </p>
-                  </div>
-                  <ManageListDialog
-                    title="Tecidos"
-                    items={tecidos}
-                    isLoading={loadingTecidos}
-                    onCreate={(nome) => createTecido.mutate(nome)}
-                    onDelete={(id) => deleteTecido.mutate(id)}
-                    isCreating={createTecido.isPending}
-                  />
-                </div>
-                {loadingTecidos ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-12 w-full" />
-                    ))}
-                  </div>
-                ) : tecidos && tecidos.length > 0 ? (
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {tecidos.map((tecido) => (
-                      <div
-                        key={tecido.id}
-                        className="flex items-center justify-between rounded-lg border p-3 bg-card"
-                      >
-                        <span className="font-medium">{tecido.nome}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-8 border rounded-lg">
-                    Nenhum tecido cadastrado. Clique em "Gerenciar" para adicionar.
-                  </p>
-                )}
-              </TabsContent>
-              <TabsContent value="operadores" className="mt-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      {loadingOperadores
-                        ? 'Carregando...'
-                        : `${operadores?.length || 0} operador${(operadores?.length || 0) !== 1 ? 'es' : ''} cadastrado${(operadores?.length || 0) !== 1 ? 's' : ''}`}
-                    </p>
-                  </div>
-                  <ManageListDialog
-                    title="Operadores"
-                    items={operadores}
-                    isLoading={loadingOperadores}
-                    onCreate={(nome) => createOperador.mutate(nome)}
-                    onDelete={(id) => deleteOperador.mutate(id)}
-                    isCreating={createOperador.isPending}
-                  />
-                </div>
-                {loadingOperadores ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-12 w-full" />
-                    ))}
-                  </div>
-                ) : operadores && operadores.length > 0 ? (
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {operadores.map((operador) => (
-                      <div
-                        key={operador.id}
-                        className="flex items-center justify-between rounded-lg border p-3 bg-card"
-                      >
-                        <span className="font-medium">{operador.nome}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-8 border rounded-lg">
-                    Nenhum operador cadastrado. Clique em "Gerenciar" para adicionar.
-                  </p>
-                )}
-              </TabsContent>
-              <TabsContent value="motivos" className="mt-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      {loadingMotivos
-                        ? 'Carregando...'
-                        : `${motivos?.length || 0} motivo${(motivos?.length || 0) !== 1 ? 's' : ''} cadastrado${(motivos?.length || 0) !== 1 ? 's' : ''}`}
-                    </p>
-                  </div>
-                  <ManageListDialog
-                    title="Motivos"
-                    items={motivos}
-                    isLoading={loadingMotivos}
-                    onCreate={(nome) => createMotivo.mutate(nome)}
-                    onDelete={(id) => deleteMotivo.mutate(id)}
-                    isCreating={createMotivo.isPending}
-                  />
-                </div>
-                {loadingMotivos ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-12 w-full" />
-                    ))}
-                  </div>
-                ) : motivos && motivos.length > 0 ? (
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {motivos.map((motivo) => (
-                      <div
-                        key={motivo.id}
-                        className="flex items-center justify-between rounded-lg border p-3 bg-card"
-                      >
-                        <span className="font-medium">{motivo.nome}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-8 border rounded-lg">
-                    Nenhum motivo cadastrado. Clique em "Gerenciar" para adicionar.
-                  </p>
-                )}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Filtros
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px]">
-                <label className="text-sm font-medium text-muted-foreground">Tecido</label>
-                <Select
-                  value={filters.tecido || 'all'}
-                  onValueChange={(value) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      tecido: value === 'all' ? undefined : value,
-                    }))
-                  }
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Todos os tecidos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os tecidos</SelectItem>
-                    {tecidos?.map((t) => (
-                      <SelectItem key={t.id} value={t.nome}>
-                        {t.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="min-w-[150px]">
-                <label className="text-sm font-medium text-muted-foreground">Data Início</label>
-                <Input
-                  type="date"
-                  className="mt-1"
-                  value={filters.dateFrom || ''}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, dateFrom: e.target.value || undefined }))
-                  }
-                />
-              </div>
-              <div className="min-w-[150px]">
-                <label className="text-sm font-medium text-muted-foreground">Data Fim</label>
-                <Input
-                  type="date"
-                  className="mt-1"
-                  value={filters.dateTo || ''}
-                  onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, dateTo: e.target.value || undefined }))
-                  }
-                />
-              </div>
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setFilters({})}
-                >
-                  Limpar Filtros
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Tecidos Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Quantidade Total por Tecido
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingTecidosSummary ? (
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-20 w-full" />
-                ))}
-              </div>
-            ) : tecidosSummary && tecidosSummary.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {tecidosSummary.map((item) => (
-                  <div
-                    key={item.tecido}
-                    className={cn(
-                      'rounded-lg border-2 p-4 transition-colors',
-                      item.quantidade > 0
-                        ? 'border-green-500/50 bg-green-50 dark:bg-green-950/20'
-                        : item.quantidade < 0
-                          ? 'border-red-500/50 bg-red-50 dark:bg-red-950/20'
-                          : 'border-muted bg-muted/50'
-                    )}
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[200px]">
+                  <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Tecido</label>
+                  <Select
+                    value={filters.tecido || 'all'}
+                    onValueChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        tecido: value === 'all' ? undefined : value,
+                      }))
+                    }
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="font-semibold text-sm text-foreground">{item.tecido}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Quantidade total</p>
-                      </div>
-                      <Badge
-                        variant={item.quantidade > 0 ? 'default' : item.quantidade < 0 ? 'destructive' : 'secondary'}
-                        className={cn(
-                          'text-lg font-bold px-3 py-1',
-                          item.quantidade > 0 && 'bg-green-500 hover:bg-green-600',
-                          item.quantidade < 0 && 'bg-red-500 hover:bg-red-600'
-                        )}
-                      >
-                        {item.quantidade > 0 ? '+' : ''}
-                        {item.quantidade}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os tecidos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os tecidos</SelectItem>
+                      {tecidos?.map((t) => (
+                        <SelectItem key={t.id} value={t.nome}>
+                          {t.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="min-w-[150px]">
+                  <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Data Início</label>
+                  <Input
+                    type="date"
+                    value={filters.dateFrom || ''}
+                    onChange={(e) =>
+                      setFilters((prev) => ({ ...prev, dateFrom: e.target.value || undefined }))
+                    }
+                  />
+                </div>
+                <div className="min-w-[150px]">
+                  <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Data Fim</label>
+                  <Input
+                    type="date"
+                    value={filters.dateTo || ''}
+                    onChange={(e) =>
+                      setFilters((prev) => ({ ...prev, dateTo: e.target.value || undefined }))
+                    }
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => setFilters({})}
+                  >
+                    Limpar Filtros
+                  </Button>
+                </div>
               </div>
-            ) : (
-              <p className="text-center py-8 text-muted-foreground border rounded-lg">
-                Nenhum tecido encontrado no histórico.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* History Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Histórico de Movimentações</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingMovimentacoes ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : movimentacoes?.length === 0 ? (
-              <p className="text-center py-8 text-muted-foreground">
-                Nenhuma movimentação encontrada.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Tecido</TableHead>
-                      <TableHead className="text-right">Qtd</TableHead>
-                      <TableHead>Motivo</TableHead>
-                      <TableHead>Operador</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {movimentacoes?.map((mov) => (
-                      <TableRow key={mov.id}>
-                        <TableCell className="whitespace-nowrap font-mono text-sm">
-                          {formatDate(mov.created_at)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            className={cn(
-                              'font-medium',
-                              mov.tipo_movimentacao === 'Entrada'
-                                ? 'bg-entrada text-entrada-foreground'
-                                : 'bg-saida text-saida-foreground'
-                            )}
-                          >
-                            {mov.tipo_movimentacao}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{mov.tecido}</TableCell>
-                        <TableCell className="text-right font-bold">{mov.quantidade}</TableCell>
-                        <TableCell>{mov.motivo}</TableCell>
-                        <TableCell>{mov.operador}</TableCell>
+          {/* Tecidos Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <InventoryIcon className="h-4 w-4" />
+                Quantidade Total por Tecido
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingTecidosSummary ? (
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              ) : tecidosSummary && tecidosSummary.length > 0 ? (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {tecidosSummary.map((item) => (
+                    <div
+                      key={item.tecido}
+                      className={cn(
+                        'rounded-lg border p-4 transition-colors',
+                        item.quantidade > 0
+                          ? 'border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-900'
+                          : item.quantidade < 0
+                            ? 'border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900'
+                            : 'bg-card'
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm text-foreground">{item.tecido}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Quantidade total</p>
+                        </div>
+                        <Badge
+                          variant={item.quantidade > 0 ? 'default' : item.quantidade < 0 ? 'destructive' : 'secondary'}
+                          className={cn(
+                            'text-base font-bold px-2.5 py-0.5',
+                            item.quantidade > 0 && 'bg-green-600 hover:bg-green-700',
+                            item.quantidade < 0 && 'bg-red-600 hover:bg-red-700'
+                          )}
+                        >
+                          {item.quantidade > 0 ? '+' : ''}
+                          {item.quantidade}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center py-8 text-muted-foreground border border-dashed rounded-lg">
+                  Nenhum tecido encontrado no histórico.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* History Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <CalendarToday className="h-4 w-4" />
+                Histórico de Movimentações
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingMovimentacoes ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : movimentacoes?.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground border border-dashed rounded-lg">
+                  Nenhuma movimentação encontrada.
+                </p>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Tecido</TableHead>
+                        <TableHead className="text-right">Qtd</TableHead>
+                        <TableHead>Motivo</TableHead>
+                        <TableHead>Operador</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+                    </TableHeader>
+                    <TableBody>
+                      {movimentacoes?.map((mov) => (
+                        <TableRow key={mov.id}>
+                          <TableCell className="whitespace-nowrap font-mono text-xs">
+                            {formatDate(mov.created_at)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'font-medium',
+                                mov.tipo_movimentacao === 'Entrada'
+                                  ? 'border-green-200 text-green-700 bg-green-50'
+                                  : 'border-red-200 text-red-700 bg-red-50'
+                              )}
+                            >
+                              {mov.tipo_movimentacao}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium text-sm">{mov.tecido}</TableCell>
+                          <TableCell className="text-right font-bold text-sm">{mov.quantidade}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{mov.motivo}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{mov.operador}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </main>
+        
+        {/* Management Dialogs */}
+        <ManageListDialog
+            title="Tecidos"
+            items={tecidos}
+            isLoading={loadingTecidos}
+            onCreate={(nome) => createTecido.mutate(nome)}
+            onDelete={(id) => deleteTecido.mutate(id)}
+            isCreating={createTecido.isPending}
+            open={manageDialog === 'tecidos'}
+            onOpenChange={(open) => !open && setManageDialog(null)}
+        />
+        <ManageListDialog
+            title="Operadores"
+            items={operadores}
+            isLoading={loadingOperadores}
+            onCreate={(nome) => createOperador.mutate(nome)}
+            onDelete={(id) => deleteOperador.mutate(id)}
+            isCreating={createOperador.isPending}
+            open={manageDialog === 'operadores'}
+            onOpenChange={(open) => !open && setManageDialog(null)}
+        />
+        <ManageListDialog
+            title="Motivos"
+            items={motivos}
+            isLoading={loadingMotivos}
+            onCreate={(nome) => createMotivo.mutate(nome)}
+            onDelete={(id) => deleteMotivo.mutate(id)}
+            isCreating={createMotivo.isPending}
+            open={manageDialog === 'motivos'}
+            onOpenChange={(open) => !open && setManageDialog(null)}
+        />
+      </SidebarInset>
+    </SidebarProvider>
   );
 };
 

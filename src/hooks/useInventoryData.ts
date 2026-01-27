@@ -50,7 +50,20 @@ export function useTecidos() {
         .from('est_tecidos')
         .select('*')
         .order('nome');
-      if (error) throw error;
+      
+      if (error) {
+        // Melhorar mensagem de erro para casos comuns
+        if (error.message?.includes('fetch') || error.message?.includes('network') || error.code === 'PGRST116') {
+          const configError = new Error(
+            'Não foi possível conectar ao Supabase. Verifique se as variáveis de ambiente estão configuradas no arquivo .env.local'
+          );
+          configError.name = 'SupabaseConfigError';
+          throw configError;
+        }
+        
+        throw error;
+      }
+      
       return data as Tecido[];
     },
   });

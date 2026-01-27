@@ -65,17 +65,33 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  // SECURITY NOTE: dangerouslySetInnerHTML é usado aqui para injetar CSS dinâmico.
+  // É seguro porque:
+  // 1. O conteúdo vem de THEMES (constante estática, não input do usuário)
+  // 2. O 'id' é gerado por React.useId() ou vem de prop validada
+  // 3. As cores vêm do config que é controlado pelo componente pai
+  // 4. Não há input direto do usuário sendo injetado
+  // 5. Apenas variáveis CSS são definidas, não há execução de código JavaScript
+  // 
+  // Alternativas mais seguras (CSS-in-JS) foram consideradas, mas aumentariam
+  // significativamente o bundle size sem benefício de segurança real neste caso.
+  
+  // Sanitizar o id para prevenir injection (embora já seja seguro via useId)
+  const sanitizedId = id.replace(/[^a-zA-Z0-9-_]/g, '');
+
   return (
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
             ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${prefix} [data-chart=${sanitizedId}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    // Validar que a cor é um valor CSS válido (hex, rgb, ou nome de cor)
+    const sanitizedColor = color && /^[#a-zA-Z0-9(),.\s-]+$/.test(color) ? color : null;
+    return sanitizedColor ? `  --color-${key}: ${sanitizedColor};` : null;
   })
   .join("\n")}
 }

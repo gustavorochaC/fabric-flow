@@ -1,3 +1,4 @@
+import * as React from 'react';
 import {
   Select,
   SelectContent,
@@ -6,7 +7,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User } from 'lucide-react';
+import { Person } from '@mui/icons-material';
 import { cn } from '@/lib/utils';
 
 interface OperadorSelectProps {
@@ -16,7 +17,7 @@ interface OperadorSelectProps {
   isLoading?: boolean;
 }
 
-export function OperadorSelect({ operadores, value, onChange, isLoading }: OperadorSelectProps) {
+export const OperadorSelect = React.memo(function OperadorSelect({ operadores, value, onChange, isLoading }: OperadorSelectProps) {
   if (isLoading) {
     return <Skeleton className="h-14 w-full rounded-2xl" />;
   }
@@ -34,7 +35,7 @@ export function OperadorSelect({ operadores, value, onChange, isLoading }: Opera
         )}
       >
         <div className="flex items-center gap-3">
-          <User className="h-5 w-5 shrink-0 opacity-60" />
+          <Person className="h-5 w-5 shrink-0 opacity-60" />
           <SelectValue placeholder="Selecione o operador..." />
         </div>
       </SelectTrigger>
@@ -51,4 +52,4 @@ export function OperadorSelect({ operadores, value, onChange, isLoading }: Opera
       </SelectContent>
     </Select>
   );
-}
+});

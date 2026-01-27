@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Check, ChevronsUpDown, Search } from 'lucide-react';
+import { Check, UnfoldMore, Search } from '@mui/icons-material';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +24,12 @@ interface TecidoComboboxProps {
   isLoading?: boolean;
 }
 
-export function TecidoCombobox({ tecidos, value, onChange, isLoading }: TecidoComboboxProps) {
+export const TecidoCombobox = React.memo(function TecidoCombobox({ 
+  tecidos, 
+  value, 
+  onChange, 
+  isLoading 
+}: TecidoComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
   if (isLoading) {
@@ -51,7 +56,7 @@ export function TecidoCombobox({ tecidos, value, onChange, isLoading }: TecidoCo
             <Search className="h-5 w-5 shrink-0 opacity-60" />
             <span className="truncate">{value || 'Selecione um tecido...'}</span>
           </div>
-          <ChevronsUpDown className="ml-2 h-5 w-5 shrink-0 opacity-60" />
+          <UnfoldMore className="ml-2 h-5 w-5 shrink-0 opacity-60" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
@@ -88,4 +93,4 @@ export function TecidoCombobox({ tecidos, value, onChange, isLoading }: TecidoCo
       </PopoverContent>
     </Popover>
   );
-}
+});

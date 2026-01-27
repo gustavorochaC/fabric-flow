@@ -1,4 +1,5 @@
-import { Minus, Plus } from 'lucide-react';
+import * as React from 'react';
+import { Remove, Add } from '@mui/icons-material';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -11,7 +12,7 @@ interface QuantityStepperProps {
   step?: number;
 }
 
-export function QuantityStepper({
+export const QuantityStepper = React.memo(function QuantityStepper({
   value,
   onChange,
   min = 1,
@@ -54,7 +55,7 @@ export function QuantityStepper({
           'disabled:opacity-50 disabled:cursor-not-allowed'
         )}
       >
-        <Minus className="h-6 w-6" />
+        <Remove className="h-6 w-6" />
       </Button>
 
       <Input
@@ -87,8 +88,8 @@ export function QuantityStepper({
           'disabled:opacity-50 disabled:cursor-not-allowed'
         )}
       >
-        <Plus className="h-6 w-6" />
+        <Add className="h-6 w-6" />
       </Button>
     </div>
   );
-}
+});
