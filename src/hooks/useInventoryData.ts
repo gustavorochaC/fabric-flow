@@ -200,6 +200,38 @@ export function useTecidosSummary(filters?: { tecido?: string; dateFrom?: string
   });
 }
 
+export function useTecidoStock(nomeTecido: string | null, enabled: boolean = false) {
+  return useQuery({
+    queryKey: ['tecido-stock', nomeTecido],
+    queryFn: async () => {
+      if (!nomeTecido) {
+        return { tecido: '', quantidade: 0 };
+      }
+
+      const { data, error } = await supabase
+        .from('est_movimentacoes')
+        .select('tipo_movimentacao, quantidade')
+        .eq('tecido', nomeTecido);
+
+      if (error) throw error;
+
+      const typedData = data as { tipo_movimentacao: string; quantidade: number }[];
+
+      // Calcular estoque total: somar entradas e subtrair saídas
+      const quantidade = typedData.reduce((acc, mov) => {
+        if (mov.tipo_movimentacao === 'Entrada') {
+          return acc + mov.quantidade;
+        } else {
+          return acc - mov.quantidade;
+        }
+      }, 0);
+
+      return { tecido: nomeTecido, quantidade };
+    },
+    enabled: enabled && !!nomeTecido,
+  });
+}
+
 export function useCreateMovimentacao() {
   const queryClient = useQueryClient();
 
@@ -316,5 +348,25 @@ export function useDeleteMotivo() {
       toast.success('Motivo removido!');
     },
     onError: (error) => toast.error(error.message),
+  });
+}
+
+export function useDeleteMovimentacao() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('est_movimentacoes').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
+      queryClient.invalidateQueries({ queryKey: ['summary'] });
+      queryClient.invalidateQueries({ queryKey: ['tecidos-summary'] });
+    },
+    onError: (error) => {
+      toast.error('Erro ao excluir movimentação', {
+        description: error.message,
+      });
+    },
   });
 }

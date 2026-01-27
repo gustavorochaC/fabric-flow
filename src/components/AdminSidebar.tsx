@@ -1,12 +1,14 @@
 
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Dashboard,
   Inventory,
   People,
   Warning,
   Inventory2,
+  Logout,
 } from "@mui/icons-material"
+import { useAuth } from "@/hooks/useAuth";
 
 import {
   Sidebar,
@@ -31,10 +33,17 @@ export function AdminSidebar({
   onManageMotivos?: () => void;
 } = {}) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const isDashboardActive = location.pathname === '/admin';
   const isTecidosActive = location.pathname === '/admin/tecidos';
   const isOperadoresActive = location.pathname === '/admin/operadores';
   const isMotivosActive = location.pathname === '/admin/motivos';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -99,6 +108,23 @@ export function AdminSidebar({
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Sair"
+                  onClick={handleLogout}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Logout />
+                  <span className="text-base">Sair</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
       <SidebarRail />

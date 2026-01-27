@@ -10,13 +10,15 @@ import {
   CalendarToday,
   ChevronLeft,
   Inventory as InventoryIcon,
-  FilterList as FilterListIcon
+  FilterList as FilterListIcon,
+  Delete,
 } from "@mui/icons-material"
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -41,6 +43,7 @@ import {
 
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { ManageListDialog } from '@/components/inventory/ManageListDialog';
+import { DeleteMovimentacoesDialog } from '@/components/DeleteMovimentacoesDialog';
 
 import {
   useMovimentacoes,
@@ -55,6 +58,8 @@ import {
   useDeleteOperador,
   useCreateMotivo,
   useDeleteMotivo,
+  useDeleteMovimentacao,
+  type Movimentacao,
 } from '@/hooks/useInventoryData';
 import { cn } from '@/lib/utils';
 
@@ -66,6 +71,8 @@ const AdminPage = () => {
   }>({});
 
   const [manageDialog, setManageDialog] = useState<'tecidos' | 'operadores' | 'motivos' | null>(null);
+  const [selectedMovimentacoes, setSelectedMovimentacoes] = useState<Set<string>>(new Set());
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: summary, isLoading: loadingSummary } = useTodaySummary();
   const { data: movimentacoes, isLoading: loadingMovimentacoes } = useMovimentacoes(filters);
@@ -80,6 +87,34 @@ const AdminPage = () => {
   const deleteOperador = useDeleteOperador();
   const createMotivo = useCreateMotivo();
   const deleteMotivo = useDeleteMotivo();
+  const deleteMovimentacao = useDeleteMovimentacao();
+
+  // Funções de seleção múltipla
+  const toggleSelection = (id: string) => {
+    setSelectedMovimentacoes((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (movimentacoes && movimentacoes.length > 0) {
+      const allIds = new Set(movimentacoes.map((mov) => mov.id));
+      setSelectedMovimentacoes(allIds);
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedMovimentacoes(new Set());
+  };
+
+  const isAllSelected = movimentacoes && movimentacoes.length > 0 && selectedMovimentacoes.size === movimentacoes.length;
+  const isSomeSelected = selectedMovimentacoes.size > 0 && selectedMovimentacoes.size < (movimentacoes?.length || 0);
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "dd/MM HH:mm", { locale: ptBR });
@@ -289,10 +324,23 @@ const AdminPage = () => {
           {/* History Table */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <CalendarToday className="h-4 w-4" />
-                Histórico de Movimentações
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <CalendarToday className="h-4 w-4" />
+                  Histórico de Movimentações
+                </CardTitle>
+                {selectedMovimentacoes.size > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    className="gap-2"
+                  >
+                    <Delete className="h-4 w-4" />
+                    Excluir ({selectedMovimentacoes.size})
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {loadingMovimentacoes ? (
@@ -310,6 +358,24 @@ const AdminPage = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                selectAll();
+                              } else {
+                                clearSelection();
+                              }
+                            }}
+                            aria-label="Selecionar todas as movimentações"
+                            ref={(el) => {
+                              if (el) {
+                                el.indeterminate = isSomeSelected;
+                              }
+                            }}
+                          />
+                        </TableHead>
                         <TableHead>Data</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead>Tecido</TableHead>
@@ -321,6 +387,13 @@ const AdminPage = () => {
                     <TableBody>
                       {movimentacoes?.map((mov) => (
                         <TableRow key={mov.id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedMovimentacoes.has(mov.id)}
+                              onCheckedChange={() => toggleSelection(mov.id)}
+                              aria-label={`Selecionar movimentação ${mov.tecido}`}
+                            />
+                          </TableCell>
                           <TableCell className="whitespace-nowrap font-mono text-xs">
                             {formatDate(mov.created_at)}
                           </TableCell>
@@ -381,6 +454,17 @@ const AdminPage = () => {
             isCreating={createMotivo.isPending}
             open={manageDialog === 'motivos'}
             onOpenChange={(open) => !open && setManageDialog(null)}
+        />
+        
+        {/* Delete Movimentacoes Dialog */}
+        <DeleteMovimentacoesDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          movimentacoes={movimentacoes || []}
+          selectedIds={selectedMovimentacoes}
+          onSuccess={() => {
+            clearSelection();
+          }}
         />
       </SidebarInset>
     </SidebarProvider>

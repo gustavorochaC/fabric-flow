@@ -10,6 +10,7 @@ import OperadoresPage from "./pages/admin/OperadoresPage";
 import MotivosPage from "./pages/admin/MotivosPage";
 import NotFound from "./pages/NotFound";
 import { SupabaseConfigAlert } from "./components/SupabaseConfigAlert";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -23,10 +24,38 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/tecidos" element={<TecidosPage />} />
-          <Route path="/admin/operadores" element={<OperadoresPage />} />
-          <Route path="/admin/motivos" element={<MotivosPage />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/tecidos"
+            element={
+              <ProtectedRoute>
+                <TecidosPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/operadores"
+            element={
+              <ProtectedRoute>
+                <OperadoresPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/motivos"
+            element={
+              <ProtectedRoute>
+                <MotivosPage />
+              </ProtectedRoute>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

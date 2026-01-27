@@ -1,22 +1,26 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Inventory, CheckCircle } from '@mui/icons-material';
+import { Inventory, CheckCircle, AdminPanelSettings } from '@mui/icons-material';
 import { CircularProgress } from '@mui/material';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { AdminLoginDialog } from '@/components/AdminLoginDialog';
 
 import { ActionToggle } from '@/components/inventory/ActionToggle';
 import { TecidoCombobox } from '@/components/inventory/TecidoCombobox';
 import { QuantityStepper } from '@/components/inventory/QuantityStepper';
 import { MotivoChips } from '@/components/inventory/MotivoChips';
 import { OperadorSelect } from '@/components/inventory/OperadorSelect';
+import { TecidoStockSearch } from '@/components/inventory/TecidoStockSearch';
+import { StockResultCard } from '@/components/inventory/StockResultCard';
 
 import {
   useTecidos,
   useOperadores,
   useMotivos,
   useCreateMovimentacao,
+  useTecidoStock,
 } from '@/hooks/useInventoryData';
 import { validateNonEmptyString, validateQuantity } from '@/lib/sanitize';
 
@@ -28,12 +32,20 @@ const Index = () => {
   const [quantidade, setQuantidade] = useState(1);
   const [motivo, setMotivo] = useState('');
   const [operador, setOperador] = useState('');
+  const [isAdminDialogOpen, setIsAdminDialogOpen] = useState(false);
+  const [stockSearchTecido, setStockSearchTecido] = useState<string>('');
 
   const { toast } = useToast();
   const { data: tecidos, isLoading: loadingTecidos } = useTecidos();
   const { data: operadores, isLoading: loadingOperadores } = useOperadores();
   const { data: motivos, isLoading: loadingMotivos } = useMotivos();
   const createMovimentacao = useCreateMovimentacao();
+  
+  // Consulta de estoque
+  const { data: stockData, isLoading: loadingStock } = useTecidoStock(
+    stockSearchTecido,
+    !!stockSearchTecido
+  );
 
   const isFormValid = useMemo(
     () => tecido && quantidade > 0 && motivo && operador,
@@ -126,6 +138,16 @@ const Index = () => {
             <h1 className="text-2xl font-bold text-foreground leading-tight">Gestão de Estoque</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Registro de Movimentação</p>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 shrink-0"
+            onClick={() => setIsAdminDialogOpen(true)}
+            aria-label="Acessar painel administrativo"
+            title="Acessar painel administrativo"
+          >
+            <AdminPanelSettings className="h-5 w-5" />
+          </Button>
         </header>
 
         <form 
@@ -203,6 +225,29 @@ const Index = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Consulta de Estoque - Card Separado */}
+          <Card className="border-2 transition-all duration-200 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold">Consultar Estoque</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <TecidoStockSearch
+                tecidos={tecidos || []}
+                value={stockSearchTecido}
+                onChange={setStockSearchTecido}
+                isLoading={loadingTecidos}
+              />
+              {stockSearchTecido && (
+                <StockResultCard
+                  tecido={stockData?.tecido || stockSearchTecido}
+                  quantidade={stockData?.quantidade}
+                  isLoading={loadingStock}
+                  onClear={() => setStockSearchTecido('')}
+                />
+              )}
+            </CardContent>
+          </Card>
         </form>
       </div>
 
@@ -237,6 +282,9 @@ const Index = () => {
           </Button>
         </div>
       </div>
+
+      {/* Admin Login Dialog */}
+      <AdminLoginDialog open={isAdminDialogOpen} onOpenChange={setIsAdminDialogOpen} />
     </div>
   );
 };
