@@ -401,10 +401,10 @@ const AdminPage = () => {
                             <Badge
                               variant="outline"
                               className={cn(
-                                'font-medium',
+                                'font-medium text-white',
                                 mov.tipo_movimentacao === 'Entrada'
-                                  ? 'border-green-200 text-green-700 bg-green-50'
-                                  : 'border-red-200 text-red-700 bg-red-50'
+                                  ? 'border-green-600 bg-green-600 hover:bg-green-700 dark:border-green-500 dark:bg-green-500 dark:hover:bg-green-600'
+                                  : 'border-red-600 bg-red-600 hover:bg-red-700 dark:border-red-500 dark:bg-red-500 dark:hover:bg-red-600'
                               )}
                             >
                               {mov.tipo_movimentacao}

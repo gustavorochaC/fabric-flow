@@ -11,6 +11,7 @@ import MotivosPage from "./pages/admin/MotivosPage";
 import NotFound from "./pages/NotFound";
 import { SupabaseConfigAlert } from "./components/SupabaseConfigAlert";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AdminLayout } from "./components/AdminLayout";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +29,9 @@ const App = () => {
             path="/admin"
             element={
               <ProtectedRoute>
-                <Admin />
+                <AdminLayout>
+                  <Admin />
+                </AdminLayout>
               </ProtectedRoute>
             }
           />
@@ -36,7 +39,9 @@ const App = () => {
             path="/admin/tecidos"
             element={
               <ProtectedRoute>
-                <TecidosPage />
+                <AdminLayout>
+                  <TecidosPage />
+                </AdminLayout>
               </ProtectedRoute>
             }
           />
@@ -44,7 +49,9 @@ const App = () => {
             path="/admin/operadores"
             element={
               <ProtectedRoute>
-                <OperadoresPage />
+                <AdminLayout>
+                  <OperadoresPage />
+                </AdminLayout>
               </ProtectedRoute>
             }
           />
@@ -52,7 +59,9 @@ const App = () => {
             path="/admin/motivos"
             element={
               <ProtectedRoute>
-                <MotivosPage />
+                <AdminLayout>
+                  <MotivosPage />
+                </AdminLayout>
               </ProtectedRoute>
             }
           />

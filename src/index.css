@@ -52,7 +52,8 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  .dark {
+  /* Dark mode apenas para container admin */
+  #admin-container.dark {
     --background: 220 25% 8%;
     --foreground: 210 40% 98%;
 
@@ -94,6 +95,228 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Garantir que cores sejam aplicadas */
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* Garantir herança de cores para todos os elementos filhos */
+  #admin-container.dark * {
+    color-scheme: dark;
+  }
+
+  /* Garantir visibilidade de texto - regras específicas */
+  #admin-container.dark h1,
+  #admin-container.dark h2,
+  #admin-container.dark h3,
+  #admin-container.dark h4,
+  #admin-container.dark h5,
+  #admin-container.dark h6 {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  #admin-container.dark p,
+  #admin-container.dark span:not([class*="text-"]),
+  #admin-container.dark div:not([class*="text-"]):not([class*="bg-"]),
+  #admin-container.dark label {
+    color: hsl(var(--foreground));
+  }
+
+  /* Texto com classes específicas - garantir visibilidade */
+  #admin-container.dark .text-muted-foreground {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  #admin-container.dark .text-foreground {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Garantir visibilidade de ícones MUI - regras mais específicas */
+  #admin-container.dark svg {
+    color: currentColor !important;
+    fill: currentColor !important;
+  }
+
+  /* Ícones dentro de elementos específicos */
+  #admin-container.dark button svg,
+  #admin-container.dark a svg,
+  #admin-container.dark [role="button"] svg,
+  #admin-container.dark [class*="Button"] svg {
+    color: inherit !important;
+    fill: currentColor !important;
+  }
+
+  /* Ícones MUI específicos - Material UI usa classes específicas */
+  #admin-container.dark .MuiSvgIcon-root,
+  #admin-container.dark svg[class*="Mui"],
+  #admin-container.dark [class*="MuiSvgIcon"] {
+    color: currentColor !important;
+    fill: currentColor !important;
+  }
+
+  /* Ícones dentro de cards e containers */
+  #admin-container.dark [class*="Card"] svg,
+  #admin-container.dark [class*="card"] svg {
+    color: hsl(var(--card-foreground)) !important;
+    fill: hsl(var(--card-foreground)) !important;
+  }
+
+  /* Ícones dentro de headers */
+  #admin-container.dark header svg,
+  #admin-container.dark h1 svg,
+  #admin-container.dark h2 svg,
+  #admin-container.dark h3 svg {
+    color: hsl(var(--foreground)) !important;
+    fill: hsl(var(--foreground)) !important;
+  }
+
+  /* Garantir que ícones sem cor explícita herdem a cor do texto */
+  #admin-container.dark svg:not([style*="color"]):not([class*="text-"]) {
+    color: currentColor !important;
+  }
+
+  /* Garantir contraste em elementos interativos */
+  #admin-container.dark button:not([class*="text-"]):not([class*="bg-"]) {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  #admin-container.dark a:not([class*="text-"]) {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Botões específicos - garantir visibilidade */
+  #admin-container.dark button[class*="ghost"] {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  #admin-container.dark button[class*="outline"] {
+    color: hsl(var(--foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Botões com ícones - garantir que ícones sejam visíveis */
+  #admin-container.dark button[class*="icon"] svg {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* SidebarTrigger específico */
+  #admin-container.dark [data-sidebar="trigger"] {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  #admin-container.dark [data-sidebar="trigger"] svg {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Garantir que cards tenham fundo visível */
+  #admin-container.dark [class*="card"],
+  #admin-container.dark [class*="Card"] {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--card-foreground)) !important;
+  }
+
+  /* Garantir que inputs sejam visíveis */
+  #admin-container.dark input,
+  #admin-container.dark textarea,
+  #admin-container.dark select {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Garantir que headers de cards sejam visíveis */
+  #admin-container.dark [class*="CardTitle"],
+  #admin-container.dark [class*="card-title"] {
+    color: hsl(var(--card-foreground)) !important;
+  }
+
+  /* Garantir que tabelas sejam visíveis */
+  #admin-container.dark table,
+  #admin-container.dark th,
+  #admin-container.dark td {
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border));
+  }
+
+  #admin-container.dark th {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Garantir que badges sejam visíveis */
+  #admin-container.dark [class*="Badge"] {
+    color: hsl(var(--foreground));
+  }
+
+  /* Garantir que botões ghost sejam visíveis */
+  #admin-container.dark button[class*="ghost"] {
+    color: hsl(var(--foreground));
+  }
+
+  /* Garantir que links sejam visíveis */
+  #admin-container.dark a {
+    color: hsl(var(--foreground));
+  }
+
+  /* Garantir que elementos com text-foreground sejam visíveis */
+  #admin-container.dark [class*="text-foreground"] {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Garantir que o container admin ocupe toda a altura */
+  #admin-container {
+    min-height: 100vh;
+    width: 100%;
+  }
+
+  /* Garantir que selects e dropdowns sejam visíveis */
+  #admin-container.dark [class*="Select"],
+  #admin-container.dark [class*="select"],
+  #admin-container.dark [role="combobox"] {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Garantir que popovers e dropdowns sejam visíveis */
+  #admin-container.dark [class*="Popover"],
+  #admin-container.dark [class*="popover"],
+  #admin-container.dark [class*="Dropdown"],
+  #admin-container.dark [class*="dropdown"] {
+    background-color: hsl(var(--popover)) !important;
+    color: hsl(var(--popover-foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Garantir que tooltips sejam visíveis */
+  #admin-container.dark [class*="Tooltip"],
+  #admin-container.dark [class*="tooltip"] {
+    background-color: hsl(var(--popover)) !important;
+    color: hsl(var(--popover-foreground)) !important;
+  }
+
+  /* Garantir que separadores sejam visíveis */
+  #admin-container.dark [class*="Separator"],
+  #admin-container.dark hr {
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Garantir que skeletons sejam visíveis */
+  #admin-container.dark [class*="Skeleton"] {
+    background-color: hsl(var(--muted)) !important;
+  }
+
+  /* Responsividade - garantir que regras funcionem em todos os tamanhos */
+  @media (max-width: 768px) {
+    #admin-container.dark {
+      /* Regras específicas para mobile se necessário */
+    }
+  }
+
+  @media (min-width: 769px) and (max-width: 1024px) {
+    #admin-container.dark {
+      /* Regras específicas para tablet se necessário */
+    }
   }
 }
 
